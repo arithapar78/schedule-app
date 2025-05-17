@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Schedule</title>
+    <style>
+        :root {
+            --blue: #3b82f6;
+            --orange: #f97316;
+            --green: #22c55e;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+            --yellow: #eab308;
+            --light: #f3f4f6;
+            --dark: #1f2937;
+            --white: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9fafb;
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--light);
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .date-display {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--blue);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            padding: 0 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--blue);
+            color: var(--blue);
+        }
+        
+        .schedule-container {
+            padding: 20px;
+        }
+        
+        .schedule {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .event {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        
+        .event:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .event-time {
+            width: 150px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .event-content {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .event-emoji {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .event-title {
+            font-weight: 500;
+        }
+        
+        .school { background-color: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--blue); }
+        .basketball { background-color: rgba(249, 115, 22, 0.1); border-left: 4px solid var(--orange); }
+        .study { background-color: rgba(34, 197, 94, 0.1); border-left: 4px solid var(--green); }
+        .fun { background-color: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--red); }
+        .reminder { background-color: rgba(139, 92, 246, 0.1); border-left: 4px solid var(--purple); }
+        .routine { background-color: rgba(234, 179, 8, 0.1); border-left: 4px solid var(--yellow); }
+        
+        .add-event-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--light);
+            border-radius: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--light);
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        .current-event {
+            background-color: rgba(0, 0, 0, 0.03);
+            border-left-width: 6px !important;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            .event {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .event-time {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>My Interactive Schedule</h1>
+            <p>Organize your day effectively</p>
+        </header>
+        
+        <div class="controls">
+            <div class="date-display">
+                <span id="current-date">Today</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="prev-day">Previous Day</button>
+                <button class="btn" id="today">Today</button>
+                <button class="btn" id="next-day">Next Day</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="weekday">Weekday Schedule</div>
+            <div class="tab" data-tab="weekend">Weekend Schedule</div>
+            <div class="tab" data-tab="custom">Add Custom Events</div>
+        </div>
+        
+        <div class="schedule-container">
+            <div class="tab-content" id="weekday-tab">
+                <div class="schedule" id="weekday-schedule">
+                    <!-- Weekday schedule will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="tab-content hidden" id="weekend-tab">
+                <div class="schedule" id="weekend-schedule">
+                    <!-- Weekend schedule will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="tab-content hidden" id="custom-tab">
+                <div class="add-event-form">
+                    <h3>Add Custom Event</h3>
+                    <form id="add-event-form">
+                        <div class="form-group">
+                            <label for="event-date">Date:</label>
+                            <input type="date" id="event-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-start-time">Start Time:</label>
+                            <input type="time" id="event-start-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-end-time">End Time:</label>
+                            <input type="time" id="event-end-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-title">Title:</label>
+                            <input type="text" id="event-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-emoji">Emoji:</label>
+                            <input type="text" id="event-emoji" placeholder="🏀">
+                        </div>
+                        <div class="form-group">
+                            <label for="event-category">Category:</label>
+                            <select id="event-category">
+                                <option value="school">School/Classes</option>
+                                <option value="basketball">Basketball</option>
+                                <option value="study">Homework/Study</option>
+                                <option value="fun">Gaming/Fun/Ari Time</option>
+                                <option value="reminder">Reminders</option>
+                                <option value="routine">Sleep & Meals</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">Add Event</button>
+                    </form>
+                </div>
+                
+                <div class="custom-events-list">
+                    <h3>Your Custom Events</h3>
+                    <div id="custom-events">
+                        <!-- Custom events will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--blue);"></div>
+                    <span>School/Classes</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--orange);"></div>
+                    <span>Basketball</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--green);"></div>
+                    <span>Homework/Study</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--red);"></div>
+                    <span>Gaming/Fun/Ari Time</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--purple);"></div>
+                    <span>Reminders</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--yellow);"></div>
+                    <span>Sleep & Meals</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Schedule data
+            const weekdaySchedule = [
+                { time: '5:20–6:00 AM', emoji: '🧘', title: 'Wake Up + Get Ready for Workout', category: 'routine' },
+                { time: '6:00–7:00 AM', emoji: '💪', title: 'Workout or Yoga', category: 'routine' },
+                { time: '7:00–7:10 AM', emoji: '🍳', title: 'Weekday Breakfast', category: 'routine' },
+                { time: '7:10–7:30 AM', emoji: '🎒', title: 'Get Ready + Leave for School', category: 'routine' },
+                { time: '7:30–2:56 PM', emoji: '🏫', title: 'School', category: 'school' },
+                { time: '3:00–4:00 PM (Tue/Wed)', emoji: '📚', title: 'Homework / Study (Math & Debate)', category: 'study', days: [2,3] },
+                { time: '4:00–4:20 PM (Mon)', emoji: '🚗', title: 'Get Ready for Bobby Training', category: 'basketball', days: [1] },
+                { time: '4:20–7:00 PM (Mon)', emoji: '🏀', title: 'Bobby Basketball Training', category: 'basketball', days: [1] },
+                { time: '4:30–6:00 PM (Wed)', emoji: '🏀', title: 'Personal Training with Rene', category: 'basketball', days: [3] },
+                { time: '4:00–5:45 PM (Thu)', emoji: '🧠', title: 'AoPS Class', category: 'school', days: [4] },
+                { time: '5:45–6:00 PM (Thu)', emoji: '🍌', title: 'Snack + Break', category: 'reminder', days: [4] },
+                { time: '6:00–8:00 PM (Thu)', emoji: '🗣️', title: 'Debate', category: 'school', days: [4] },
+                { time: '6:55–8:15 PM (Tue)', emoji: '🏀', title: 'Basketball Practice', category: 'basketball', days: [2] },
+                { time: '7:00–8:00 PM (Fri)', emoji: '🏀', title: 'Rene Practice', category: 'basketball', days: [5] },
+                { time: 'Evenings (Free blocks)', emoji: '🎮', title: 'Gaming / 🧠 Extra Study / 😌 Ari Time', category: 'fun' },
+                { time: '9:00–9:15 PM', emoji: '🪥', title: 'Wind Down + Get Ready for Bed', category: 'routine' },
+                { time: '9:15–5:20 AM', emoji: '💤', title: 'Sleep', category: 'routine' }
+            ];
+            
+            const weekendSchedule = [
+                { time: '5:20–6:00 AM', emoji: '🧘', title: 'Wake Up + Get Ready', category: 'routine' },
+                { time: '6:00–7:00 AM', emoji: '💪', title: 'Workout or Yoga', category: 'routine' },
+                { time: '7:30–8:00 AM', emoji: '🍳', title: 'Weekend Breakfast', category: 'routine' },
+                { time: 'Game time varies', emoji: '🏀', title: 'Basketball Games (Add per week manually)', category: 'basketball' },
+                { time: 'Post-game block', emoji: '🎮', title: 'Gaming or 📚 Study (If free)', category: 'fun' },
+                { time: 'Evening (if no game)', emoji: '😌', title: 'Ari Time / Chill / Family', category: 'fun' },
+                { time: '9:00–9:15 PM', emoji: '🪥', title: 'Wind Down + Get Ready for Bed', category: 'routine' },
+                { time: '9:15–5:20 AM', emoji: '💤', title: 'Sleep', category: 'routine' }
+            ];
+            
+            // DOM elements
+            const currentDateElement = document.getElementById('current-date');
+            const prevDayButton = document.getElementById('prev-day');
+            const nextDayButton = document.getElementById('next-day');
+            const todayButton = document.getElementById('today');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const weekdayScheduleElement = document.getElementById('weekday-schedule');
+            const weekendScheduleElement = document.getElementById('weekend-schedule');
+            const addEventForm = document.getElementById('add-event-form');
+            const customEventsContainer = document.getElementById('custom-events');
+            
+            // State
+            let currentDate = new Date();
+            let customEvents = JSON.parse(localStorage.getItem('customEvents')) || [];
+            
+            // Initialize the application
+            updateDateDisplay();
+            renderSchedule();
+            renderCustomEvents();
+            highlightCurrentEvent();
+            
+            // Set up interval to highlight current event every minute
+            setInterval(highlightCurrentEvent, 60000);
+            
+            // Event listeners
+            prevDayButton.addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 1);
+                updateDateDisplay();
+                renderSchedule();
+                highlightCurrentEvent();
+            });
+            
+            nextDayButton.addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 1);
+                updateDateDisplay();
+                renderSchedule();
+                highlightCurrentEvent();
+            });
+            
+            todayButton.addEventListener('click', () => {
+                currentDate = new Date();
+                updateDateDisplay();
+                renderSchedule();
+                highlightCurrentEvent();
+            });
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    const tabName = tab.getAttribute('data-tab');
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+                });
+            });
+            
+            addEventForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const date = document.getElementById('event-date').value;
+                const startTime = document.getElementById('event-start-time').value;
+                const endTime = document.getElementById('event-end-time').value;
+                const title = document.getElementById('event-title').value;
+                const emoji = document.getElementById('event-emoji').value || '📌';
+                const category = document.getElementById('event-category').value;
+                
+                const newEvent = {
+                    id: Date.now(),
+                    date,
+                    time: `${formatTime(startTime)}–${formatTime(endTime)}`,
+                    title,
+                    emoji,
+                    category
+                };
+                
+                customEvents.push(newEvent);
+                localStorage.setItem('customEvents', JSON.stringify(customEvents));
+                renderCustomEvents();
+                addEventForm.reset();
+                
+                // Show a success message
+                alert('Event added successfully!');
+            });
+            
+            // Functions
+            function updateDateDisplay() {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                currentDateElement.textContent = currentDate.toLocaleDateString(undefined, options);
+                
+                // Show weekday or weekend schedule based on the day
+                const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    document.querySelector('[data-tab="weekend"]').click();
+                } else {
+                    document.querySelector('[data-tab="weekday"]').click();
+                }
+            }
+            
+            function renderSchedule() {
+                // Clear existing schedule
+                weekdayScheduleElement.innerHTML = '';
+                weekendScheduleElement.innerHTML = '';
+                
+                const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+                
+                // Render weekday schedule
+                weekdaySchedule.forEach(event => {
+                    // Check if the event should be shown on the current weekday
+                    if (!event.days || event.days.includes(dayOfWeek)) {
+                        const eventElement = createEventElement(event);
+                        weekdayScheduleElement.appendChild(eventElement);
+                    }
+                });
+                
+                // Render weekend schedule
+                weekendSchedule.forEach(event => {
+                    const eventElement = createEventElement(event);
+                    weekendScheduleElement.appendChild(eventElement);
+                });
+                
+                // Add custom events for the current date
+                const currentDateString = currentDate.toISOString().split('T')[0];
+                const todayCustomEvents = customEvents.filter(event => event.date === currentDateString);
+                
+                todayCustomEvents.forEach(event => {
+                    const eventElement = createEventElement(event);
+                    
+                    // Add to appropriate schedule based on day of week
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        weekendScheduleElement.appendChild(eventElement);
+                    } else {
+                        weekdayScheduleElement.appendChild(eventElement);
+                    }
+                });
+            }
+            
+            function createEventElement(event) {
+                const eventElement = document.createElement('div');
+                eventElement.className = `event ${event.category}`;
+                eventElement.innerHTML = `
+                    <div class="event-time">${event.time}</div>
+                    <div class="event-content">
+                        <div class="event-emoji">${event.emoji}</div>
+                        <div class="event-title">${event.title}</div>
+                    </div>
+                `;
+                return eventElement;
+            }
+            
+            function renderCustomEvents() {
+                customEventsContainer.innerHTML = '';
+                
+                if (customEvents.length === 0) {
+                    customEventsContainer.innerHTML = '<p>No custom events added yet.</p>';
+                    return;
+                }
+                
+                // Sort custom events by date and time
+                customEvents.sort((a, b) => {
+                    if (a.date !== b.date) {
+                        return new Date(a.date) - new Date(b.date);
+                    }
+                    return a.time.localeCompare(b.time);
+                });
+                
+                customEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = `event ${event.category}`;
+                    
+                    // Format the date
+                    const eventDate = new Date(event.date);
+                    const formattedDate = eventDate.toLocaleDateString(undefined, {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    eventElement.innerHTML = `
+                        <div class="event-time">${formattedDate} | ${event.time}</div>
+                        <div class="event-content">
+                            <div class="event-emoji">${event.emoji}</div>
+                            <div class="event-title">${event.title}</div>
+                        </div>
+                        <button class="btn" data-id="${event.id}" style="margin-left: 10px; background-color: var(--danger);">Delete</button>
+                    `;
+                    
+                    customEventsContainer.appendChild(eventElement);
+                    
+                    // Add delete event listener
+                    const deleteButton = eventElement.querySelector('button');
+                    deleteButton.addEventListener('click', () => {
+                        const eventId = parseInt(deleteButton.getAttribute('data-id'));
+                        customEvents = customEvents.filter(e => e.id !== eventId);
+                        localStorage.setItem('customEvents', JSON.stringify(customEvents));
+                        renderCustomEvents();
+                        renderSchedule();
+                    });
+                });
+            }
+            
+            function highlightCurrentEvent() {
+                // Remove current highlighting
+                document.querySelectorAll('.event').forEach(event => {
+                    event.classList.remove('current-event');
+                });
+                
+                // Only highlight if viewing today
+                const today = new Date();
+                if (
+                    currentDate.getDate() === today.getDate() &&
+                    currentDate.getMonth() === today.getMonth() &&
+                    currentDate.getFullYear() === today.getFullYear()
+                ) {
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    
+                    // Function to check if a time range includes the current time
+                    function isCurrentTimeInRange(timeRange) {
+                        const [startEnd, dayInfo] = timeRange.split(' (');
+                        const [start, end] = startEnd.split('–');
+                        
+                        // Parse start time
+                        let [startHour, startMinPart] = start.split(':');
+                        startHour = parseInt(startHour);
+                        let startMin = parseInt(startMinPart);
+                        if (start.includes('PM') && startHour < 12) startHour += 12;
+                        if (start.includes('AM') && startHour === 12) startHour = 0;
+                        
+                        // Parse end time
+                        let [endHour, endMinPart] = end.split(':');
+                        endHour = parseInt(endHour);
+                        let endMin = parseInt(endMinPart);
+                        if (end.includes('PM') && endHour < 12) endHour += 12;
+                        if (end.includes('AM') && endHour === 12) endHour = 0;
+                        
+                        // Check if current time is in range
+                        if (
+                            (currentHour > startHour || (currentHour === startHour && currentMinute >= startMin)) &&
+                            (currentHour < endHour || (currentHour === endHour && currentMinute <= endMin))
+                        ) {
+                            return true;
+                        }
+                        
+                        return false;
+                    }
+                    
+                    // Get all events for today's schedule
+                    const scheduleContainer = (today.getDay() === 0 || today.getDay() === 6) ? 
+                        weekendScheduleElement : weekdayScheduleElement;
+                    
+                    const events = scheduleContainer.querySelectorAll('.event');
+                    
+                    // Check each event to see if we're currently in its time range
+                    events.forEach(event => {
+                        const timeElement = event.querySelector('.event-time');
+                        if (timeElement) {
+                            const timeText = timeElement.textContent;
+                            
+                            // Special handling for "Evenings" and other text-based times
+                            if (timeText.includes('Evenings') && currentHour >= 19 && currentHour < 21) {
+                                event.classList.add('current-event');
+                            }
+                            // Special handling for sleep time that crosses midnight
+                            else if (timeText.includes('9:15–5:20') && 
+                                    ((currentHour >= 21 && currentMinute >= 15) || currentHour < 5 || 
+                                     (currentHour === 5 && currentMinute < 20))) {
+                                event.classList.add('current-event');
+                            }
+                            // Try to parse the time range for other events
+                            else if (timeText.includes('–')) {
+                                try {
+                                    if (isCurrentTimeInRange(timeText)) {
+                                        event.classList.add('current-event');
+                                    }
+                                } catch (e) {
+                                    // Skip if we can't parse the time
+                                    console.log('Could not parse time:', timeText);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            function formatTime(time24h) {
+                const [hours, minutes] = time24h.split(':');
+                const hour = parseInt(hours);
+                const suffix = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour % 12 || 12;
+                return `${displayHour}:${minutes} ${suffix}`;
+            }
+        });
+    </script>
+</body>
+</html>
