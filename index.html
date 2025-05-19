@@ -361,6 +361,52 @@
         .hidden {
             display: none;
         }
+        
+        /* New styles for collapsible sections */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--light);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid var(--blue);
+        }
+        
+        .section-header:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background-color: #e9edf5;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+        }
+        
+        .section-arrow {
+            font-size: 16px;
+            transition: transform 0.3s;
+        }
+        
+        .section-header.active .section-arrow {
+            transform: rotate(90deg);
+        }
+        
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 5px;
+        }
+        
+        .section-content.active {
+            max-height: 1500px; /* Arbitrary large value, adjusted based on content */
+            transition: max-height 0.5s ease-in;
+        }
     </style>
 </head>
 <body>
@@ -498,7 +544,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Schedule data
             const weekdaySchedule = [
-                { time: '5:20–6:00 AM', emoji: '🧘', title: 'Wake Up + Get Ready for Workout', category: 'routine' },
+                { time: '5:20–6:00 AM', emoji: '🧘', title: 'Wake Up + Get Ready for Workout', category: 'routine', description: "Start your day with purpose. As soon as you wake up at 5:20 AM, brush your teeth, wash your face, and make your bed to set a productive tone. Drink a glass of water to rehydrate and jumpstart your system. If you have time, prepare your workout bag—lay out your clothes, check your water bottle, and organize anything you'll need for the session. This 40-minute block isn't just about moving slowly—it's about waking your body up while mentally preparing to own the day." },
                 { time: '6:00–7:00 AM', emoji: '💪', title: 'Workout or Yoga', category: 'routine' },
                 { time: '7:00–7:10 AM', emoji: '🍳', title: 'Weekday Breakfast', category: 'routine' },
                 { time: '7:10–7:30 AM', emoji: '🎒', title: 'Get Ready + Leave for School', category: 'routine' },
@@ -760,35 +806,252 @@
                 
                 const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
                 
-                // Render weekday schedule
-                weekdaySchedule.forEach(event => {
-                    // Check if the event should be shown on the current weekday
-                    if (!event.days || event.days.includes(dayOfWeek)) {
-                        const eventElement = createEventElement(event);
-                        weekdayScheduleElement.appendChild(eventElement);
-                    }
-                });
-                
-                // Render weekend schedule
-                weekendSchedule.forEach(event => {
-                    const eventElement = createEventElement(event);
-                    weekendScheduleElement.appendChild(eventElement);
-                });
-                
-                // Add custom events for the current date
-                const currentDateString = currentDate.toISOString().split('T')[0];
-                const todayCustomEvents = customEvents.filter(event => event.date === currentDateString);
-                
-                todayCustomEvents.forEach(event => {
-                    const eventElement = createEventElement(event);
+                // For weekday schedule, create two sections
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                    // Create morning section
+                    const morningSection = createSection('Morning + School', 'weekday-morning');
+                    weekdayScheduleElement.appendChild(morningSection.header);
+                    weekdayScheduleElement.appendChild(morningSection.content);
                     
-                    // Add to appropriate schedule based on day of week
-                    if (dayOfWeek === 0 || dayOfWeek === 6) {
-                        weekendScheduleElement.appendChild(eventElement);
-                    } else {
-                        weekdayScheduleElement.appendChild(eventElement);
+                    // Create afternoon section
+                    const afternoonSection = createSection('Afternoon + Evening', 'weekday-afternoon');
+                    weekdayScheduleElement.appendChild(afternoonSection.header);
+                    weekdayScheduleElement.appendChild(afternoonSection.content);
+                    
+                    // Process each event
+                    const morningEvents = [];
+                    const afternoonEvents = [];
+                    
+                    weekdaySchedule.forEach(event => {
+                        // Skip the gaming block on Monday-Thursday
+                        if (event.title.includes('Gaming') && dayOfWeek >= 1 && dayOfWeek <= 4) {
+                            return; // Skip this event
+                        }
+                        
+                        // Check if the event should be shown on the current weekday
+                        if (event.days && !event.days.includes(dayOfWeek)) {
+                            return; // Skip event not for this day
+                        }
+                        
+                        // Modify workout event based on day of week
+                        if (event.title.includes('Workout or Yoga')) {
+                            let workoutEvent = {...event}; // Clone the event
+                            
+                            // Set workout title and emoji based on day of week
+                            switch(dayOfWeek) {
+                                case 0: // Sunday
+                                    workoutEvent.title = 'Rest Day';
+                                    workoutEvent.emoji = '☀️';
+                                    break;
+                                case 1: // Monday
+                                case 3: // Wednesday 
+                                case 5: // Friday
+                                    workoutEvent.title = 'Yoga';
+                                    workoutEvent.emoji = '🧘';
+                                    break;
+                                case 2: // Tuesday
+                                case 4: // Thursday
+                                case 6: // Saturday
+                                    workoutEvent.title = 'Workout';
+                                    workoutEvent.emoji = '💪';
+                                    break;
+                            }
+                            
+                            // Determine if it's a morning or afternoon event
+                            // For workout, we know it's always morning
+                            morningEvents.push(workoutEvent);
+                        } else {
+                            // Determine if it's a morning or afternoon event
+                            // Special case for sleep events - always put in afternoon section
+                            if (event.title.includes('Sleep') || isAfternoonEvent(event.time)) {
+                                afternoonEvents.push(event);
+                            } else {
+                                morningEvents.push(event);
+                            }
+                        }
+                    });
+                    
+                    // Add custom events for the current date
+                    const currentDateString = currentDate.toISOString().split('T')[0];
+                    const todayCustomEvents = customEvents.filter(event => event.date === currentDateString);
+                    
+                    todayCustomEvents.forEach(event => {
+                        const isAfternoon = isAfternoonEvent(event.time);
+                        if (isAfternoon) {
+                            afternoonEvents.push(event);
+                        } else {
+                            morningEvents.push(event);
+                        }
+                    });
+                    
+                    // Render morning events
+                    morningEvents.forEach(event => {
+                        const eventElement = createEventElement(event);
+                        morningSection.content.appendChild(eventElement);
+                    });
+                    
+                    // Render afternoon events
+                    afternoonEvents.forEach(event => {
+                        const eventElement = createEventElement(event);
+                        afternoonSection.content.appendChild(eventElement);
+                    });
+                    
+                    // Open the first section by default
+                    setTimeout(() => {
+                        toggleSection(morningSection.header);
+                    }, 100);
+                } 
+                // For weekend schedule, also create two sections
+                else {
+                    // Create morning section
+                    const morningSection = createSection('Morning + Active Time', 'weekend-morning');
+                    weekendScheduleElement.appendChild(morningSection.header);
+                    weekendScheduleElement.appendChild(morningSection.content);
+                    
+                    // Create afternoon section
+                    const afternoonSection = createSection('Afternoon + Evening', 'weekend-afternoon');
+                    weekendScheduleElement.appendChild(afternoonSection.header);
+                    weekendScheduleElement.appendChild(afternoonSection.content);
+                    
+                    // Process each event
+                    const morningEvents = [];
+                    const afternoonEvents = [];
+                    
+                    weekendSchedule.forEach(event => {
+                        // Handle weekend workout
+                        if (event.title.includes('Workout or Yoga')) {
+                            let workoutEvent = {...event}; // Clone the event
+                            
+                            // Set workout title and emoji based on day of week
+                            switch(dayOfWeek) {
+                                case 0: // Sunday
+                                    workoutEvent.title = 'Rest Day';
+                                    workoutEvent.emoji = '☀️';
+                                    break;
+                                case 6: // Saturday
+                                    workoutEvent.title = 'Workout';
+                                    workoutEvent.emoji = '💪';
+                                    break;
+                            }
+                            
+                            morningEvents.push(workoutEvent);
+                        } 
+                        // Skip gaming blocks on weekdays (Mon-Thu)
+                        else if (event.title.includes('Gaming') && dayOfWeek >= 1 && dayOfWeek <= 4) {
+                            return; // Skip this event
+                        }
+                        else {
+                            // Categorize as morning or afternoon
+                            if (event.title.includes('Basketball') || 
+                                event.title.includes('Wake Up') || 
+                                event.title.includes('Breakfast')) {
+                                morningEvents.push(event);
+                            } else {
+                                afternoonEvents.push(event);
+                            }
+                        }
+                    });
+                    
+                    // Add custom events for the current date
+                    const currentDateString = currentDate.toISOString().split('T')[0];
+                    const todayCustomEvents = customEvents.filter(event => event.date === currentDateString);
+                    
+                    todayCustomEvents.forEach(event => {
+                        const isAfternoon = isAfternoonEvent(event.time);
+                        if (isAfternoon) {
+                            afternoonEvents.push(event);
+                        } else {
+                            morningEvents.push(event);
+                        }
+                    });
+                    
+                    // Render morning events
+                    morningEvents.forEach(event => {
+                        const eventElement = createEventElement(event);
+                        morningSection.content.appendChild(eventElement);
+                    });
+                    
+                    // Render afternoon events
+                    afternoonEvents.forEach(event => {
+                        const eventElement = createEventElement(event);
+                        afternoonSection.content.appendChild(eventElement);
+                    });
+                    
+                    // Open the first section by default
+                    setTimeout(() => {
+                        toggleSection(morningSection.header);
+                    }, 100);
+                }
+            }
+            
+            function isAfternoonEvent(timeString) {
+                // Check if time starts at or after 3:00 PM
+                if (timeString.includes('–')) {
+                    const startTime = timeString.split('–')[0].trim();
+                    if (startTime.includes('PM') && !startTime.includes('12:')) {
+                        return true;
                     }
+                    if (startTime.includes(':')) {
+                        const hour = parseInt(startTime.split(':')[0]);
+                        if (hour >= 15) { // 3 PM or later in 24-hour format
+                            return true;
+                        }
+                    }
+                }
+                
+                // For text-based times like "Evenings"
+                if (timeString.includes('Evening') || 
+                    timeString.includes('Night') || 
+                    timeString.includes('PM')) {
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            function createSection(title, id) {
+                // Create section header
+                const header = document.createElement('div');
+                header.className = 'section-header';
+                header.dataset.target = id;
+                header.innerHTML = `
+                    <div class="section-title">${title}</div>
+                    <div class="section-arrow">▶</div>
+                `;
+                
+                // Create section content
+                const content = document.createElement('div');
+                content.className = 'section-content';
+                content.id = id;
+                
+                // Add click event to header
+                header.addEventListener('click', function() {
+                    toggleSection(this);
                 });
+                
+                return { header, content };
+            }
+            
+            function toggleSection(headerElement) {
+                // Get all headers and contents
+                const allHeaders = document.querySelectorAll('.section-header');
+                const allContents = document.querySelectorAll('.section-content');
+                
+                // Get target content
+                const targetId = headerElement.dataset.target;
+                const targetContent = document.getElementById(targetId);
+                
+                // Close all sections first
+                allHeaders.forEach(header => header.classList.remove('active'));
+                allContents.forEach(content => content.classList.remove('active'));
+                
+                // Toggle the clicked section
+                headerElement.classList.toggle('active');
+                targetContent.classList.toggle('active');
+                
+                // Update arrow icon
+                const arrow = headerElement.querySelector('.section-arrow');
+                arrow.textContent = headerElement.classList.contains('active') ? '▼' : '▶';
             }
             
             function createEventElement(event) {
@@ -920,11 +1183,8 @@
                         return false;
                     }
                     
-                    // Get all events for today's schedule
-                    const scheduleContainer = (today.getDay() === 0 || today.getDay() === 6) ? 
-                        weekendScheduleElement : weekdayScheduleElement;
-                    
-                    const events = scheduleContainer.querySelectorAll('.event');
+                    // Get all events from all sections for today's schedule
+                    const events = document.querySelectorAll('.event');
                     
                     // Check each event to see if we're currently in its time range
                     events.forEach(event => {
@@ -935,18 +1195,45 @@
                             // Special handling for "Evenings" and other text-based times
                             if (timeText.includes('Evenings') && currentHour >= 19 && currentHour < 21) {
                                 event.classList.add('current-event');
+                                
+                                // Expand section containing this event
+                                const parentSection = event.closest('.section-content');
+                                if (parentSection && !parentSection.classList.contains('active')) {
+                                    const header = document.querySelector(`[data-target="${parentSection.id}"]`);
+                                    if (header) {
+                                        toggleSection(header);
+                                    }
+                                }
                             }
                             // Special handling for sleep time that crosses midnight
                             else if ((timeText.includes('8:30–5:20') || timeText.includes('9:15–5:20')) && 
                                     ((currentHour >= 21) || (currentHour >= 20 && currentMinute >= 30) || currentHour < 5 || 
                                      (currentHour === 5 && currentMinute < 20))) {
                                 event.classList.add('current-event');
+                                
+                                // Expand section containing this event
+                                const parentSection = event.closest('.section-content');
+                                if (parentSection && !parentSection.classList.contains('active')) {
+                                    const header = document.querySelector(`[data-target="${parentSection.id}"]`);
+                                    if (header) {
+                                        toggleSection(header);
+                                    }
+                                }
                             }
                             // Try to parse the time range for other events
                             else if (timeText.includes('–')) {
                                 try {
                                     if (isCurrentTimeInRange(timeText)) {
                                         event.classList.add('current-event');
+                                        
+                                        // Expand section containing this event
+                                        const parentSection = event.closest('.section-content');
+                                        if (parentSection && !parentSection.classList.contains('active')) {
+                                            const header = document.querySelector(`[data-target="${parentSection.id}"]`);
+                                            if (header) {
+                                                toggleSection(header);
+                                            }
+                                        }
                                     }
                                 } catch (e) {
                                     // Skip if we can't parse the time
