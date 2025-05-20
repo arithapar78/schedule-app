@@ -309,11 +309,32 @@
             font-weight: 500;
         }
         
-        input, select {
+        input:not([type="checkbox"]), select {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
         }
         
         .legend {
@@ -362,26 +383,86 @@
             display: none;
         }
         
-        /* Drag and drop styles */
-        .dragging {
-            opacity: 0.7;
-            transform: scale(0.98);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .section-content.drop-zone-active {
-            background-color: rgba(59, 130, 246, 0.1);
+        /* Styles for Favorite Templates */
+        .templates-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--light);
             border-radius: 8px;
-            padding: 10px;
+        }
+        
+        .templates-header {
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .templates-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .template-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.2s;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            min-width: 180px;
         }
         
-        .event[draggable=true] {
-            cursor: grab;
+        .template-card:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
         }
         
-        .event[draggable=true]:active {
-            cursor: grabbing;
+        .template-emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        
+        .template-info {
+            flex: 1;
+        }
+        
+        .template-title {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .template-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        
+        .template-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        
+        .template-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px;
+        }
+        
+        .template-btn:hover {
+            color: var(--red);
         }
         
         /* New styles for collapsible sections */
@@ -488,6 +569,14 @@
             
             <div class="tab-content hidden" id="custom-tab">
                 <div class="add-event-form">
+                    <div class="templates-container">
+                        <div class="templates-header">
+                            <span>Favorite Templates</span>
+                        </div>
+                        <div class="templates-list" id="templates-list">
+                            <!-- Templates will be populated by JavaScript -->
+                        </div>
+                    </div>
                     <h3>Add Custom Event</h3>
                     <form id="add-event-form">
                         <div class="form-group">
@@ -520,6 +609,15 @@
                                 <option value="reminder">Reminders</option>
                                 <option value="routine">Sleep & Meals</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-description">Description:</label>
+                            <textarea id="event-description" rows="3" placeholder="Enter event description (optional)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="save-as-template"> Save as Template
+                            </label>
                         </div>
                         <button type="submit" class="btn">Add Event</button>
                     </form>
@@ -613,7 +711,14 @@
             // State
             let currentDate = new Date();
             let customEvents = [];
-            let draggedEvent = null; // Track the currently dragged event
+            let templates = [];
+            
+            // Default templates
+            const defaultTemplates = [
+                { title: 'Basketball Practice', emoji: '🏀', category: 'basketball', startTime: '16:00', endTime: '17:30', description: 'Regular basketball practice session.' },
+                { title: 'Study Session', emoji: '📚', category: 'study', startTime: '15:00', endTime: '16:30', description: 'Focused study time for homework and exam prep.' },
+                { title: 'Debate Practice', emoji: '🧠', category: 'school', startTime: '16:00', endTime: '17:30', description: 'Practice session for upcoming debate tournament.' }
+            ];
             
             // Try to load from localStorage if available, otherwise use default empty array
             try {
@@ -621,15 +726,26 @@
                 if (storedEvents) {
                     customEvents = JSON.parse(storedEvents);
                 }
+                
+                const storedTemplates = localStorage.getItem('eventTemplates');
+                if (storedTemplates) {
+                    templates = JSON.parse(storedTemplates);
+                } else {
+                    // Use default templates if none are stored
+                    templates = [...defaultTemplates];
+                    localStorage.setItem('eventTemplates', JSON.stringify(templates));
+                }
             } catch (error) {
                 // Silent fallback to in-memory storage
                 customEvents = [];
+                templates = [...defaultTemplates];
             }
             
             // Initialize the application
             updateDateDisplay();
             renderSchedule();
             renderCustomEvents();
+            renderTemplates();
             highlightCurrentEvent();
             setupEventPopup();
             
@@ -763,6 +879,8 @@
                 const title = document.getElementById('event-title').value;
                 const emoji = document.getElementById('event-emoji').value || '📌';
                 const category = document.getElementById('event-category').value;
+                const description = document.getElementById('event-description').value || 'Custom event added to your schedule.';
+                const saveAsTemplate = document.getElementById('save-as-template').checked;
                 
                 const newEvent = {
                     id: Date.now(),
@@ -771,8 +889,34 @@
                     title,
                     emoji,
                     category,
-                    description: 'Custom event added to your schedule.'
+                    description
                 };
+                
+                customEvents.push(newEvent);
+                
+                // Save as template if checkbox is checked
+                if (saveAsTemplate) {
+                    const newTemplate = {
+                        title,
+                        emoji,
+                        category,
+                        startTime,
+                        endTime,
+                        description
+                    };
+                    
+                    templates.push(newTemplate);
+                    
+                    // Try to save templates
+                    try {
+                        localStorage.setItem('eventTemplates', JSON.stringify(templates));
+                    } catch (error) {
+                        console.log('Could not save templates to localStorage');
+                    }
+                    
+                    // Update templates display
+                    renderTemplates();
+                }
                 
                 customEvents.push(newEvent);
                 
@@ -1047,12 +1191,6 @@
                 content.className = 'section-content';
                 content.id = id;
                 
-            // Add drop zone functionality to section content
-                content.addEventListener('dragover', handleDragOver);
-                content.addEventListener('dragenter', handleDragEnter);
-                content.addEventListener('dragleave', handleDragLeave);
-                content.addEventListener('drop', handleDrop);
-                
                 // Add click event to header
                 header.addEventListener('click', function() {
                     toggleSection(this);
@@ -1086,17 +1224,6 @@
             function createEventElement(event) {
                 const eventElement = document.createElement('div');
                 eventElement.className = `event ${event.category}`;
-                
-                // Make custom events draggable (if they have an id, which indicates they're custom)
-                if (event.id) {
-                    eventElement.setAttribute('draggable', 'true');
-                    eventElement.dataset.eventId = event.id;
-                    
-                    // Add drag event listeners
-                    eventElement.addEventListener('dragstart', handleDragStart);
-                    eventElement.addEventListener('dragend', handleDragEnd);
-                }
-                
                 eventElement.innerHTML = `
                     <div class="event-time">${event.time}</div>
                     <div class="event-content">
@@ -1293,66 +1420,43 @@
                 return `${displayHour}:${minutes} ${suffix}`;
             }
             
-            // Drag and drop event handlers
-            function handleDragStart(e) {
-                draggedEvent = this;
+            function renderTemplates() {
+                const templatesContainer = document.getElementById('templates-list');
+                templatesContainer.innerHTML = '';
                 
-                // Set data for drop
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', this.dataset.eventId);
-                
-                setTimeout(() => {
-                    this.classList.add('dragging');
-                }, 0);
-            }
-            
-            function handleDragEnd(e) {
-                this.classList.remove('dragging');
-                draggedEvent = null;
-            }
-            
-            function handleDragOver(e) {
-                e.preventDefault(); // Necessary to allow dropping
-                e.dataTransfer.dropEffect = 'move';
-                return false;
-            }
-            
-            function handleDragEnter(e) {
-                this.classList.add('drop-zone-active');
-            }
-            
-            function handleDragLeave(e) {
-                this.classList.remove('drop-zone-active');
-            }
-            
-            function handleDrop(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                this.classList.remove('drop-zone-active');
-                
-                if (!draggedEvent) return false;
-                
-                // Get the event ID
-                const eventId = parseInt(e.dataTransfer.getData('text/plain'));
-                const targetSection = this;
-                
-                // Find the custom event
-                const eventIndex = customEvents.findIndex(event => event.id === eventId);
-                if (eventIndex === -1) return false;
-                
-                // Move the element to the new section
-                targetSection.appendChild(draggedEvent);
-                
-                // Mark that this event has been moved to this section
-                // We're just making a visual change, not updating localStorage
-                if (targetSection.id.includes('morning')) {
-                    customEvents[eventIndex].sectionOverride = 'morning';
-                } else if (targetSection.id.includes('afternoon')) {
-                    customEvents[eventIndex].sectionOverride = 'afternoon';
-                }
-                
-                return false;
+                templates.forEach((template, index) => {
+                    const templateCard = document.createElement('div');
+                    templateCard.className = `template-card ${template.category}`;
+                    templateCard.innerHTML = `
+                        <div class="template-emoji">${template.emoji}</div>
+                        <div class="template-info">
+                            <div class="template-title">${template.title}</div>
+                            <div class="template-meta">${formatTime(template.startTime)}–${formatTime(template.endTime)}</div>
+                        </div>
+                    `;
+                    
+                    // Add click event
+                    templateCard.addEventListener('click', () => {
+                        // Fill form with template data
+                        document.getElementById('event-title').value = template.title;
+                        document.getElementById('event-emoji').value = template.emoji;
+                        document.getElementById('event-category').value = template.category;
+                        document.getElementById('event-start-time').value = template.startTime;
+                        document.getElementById('event-end-time').value = template.endTime;
+                        document.getElementById('event-description').value = template.description || '';
+                        
+                        // Set today's date by default
+                        const today = new Date();
+                        const formattedDate = today.toISOString().split('T')[0];
+                        document.getElementById('event-date').value = formattedDate;
+                        
+                        // Scroll to the form
+                        document.getElementById('event-title').scrollIntoView({ behavior: 'smooth' });
+                        document.getElementById('event-title').focus();
+                    });
+                    
+                    templatesContainer.appendChild(templateCard);
+                });
             }
         });
     </script>
