@@ -3,29 +3,30 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Times New Roman', Times, serif;
 }
 
 body {
-    background-color: #f5f7fa;
-    color: #333;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
     line-height: 1.6;
     padding-bottom: 40px;
 }
 
 /* Header Styles */
 header {
-    background: linear-gradient(135deg, #4a6cf7 0%, #9c3ef8 100%);
-    color: white;
+    background: linear-gradient(135deg, #ff3b00 0%, #ff7800 100%);
+    color: #000000;
     padding: 30px 20px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .header-content h1 {
     font-size: 2.5rem;
     margin-bottom: 5px;
     letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .header-content p {
@@ -39,38 +40,40 @@ header {
     justify-content: center;
     align-items: center;
     padding: 15px;
-    background-color: white;
-    border-bottom: 1px solid #e1e4e8;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #ff5500;
     flex-wrap: wrap;
     gap: 10px;
 }
 
 .controls button {
-    background-color: #f0f2f5;
+    background-color: #ff5500;
     border: none;
     padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
     font-weight: 500;
+    color: #000000;
     transition: all 0.2s ease;
 }
 
 .controls button:hover {
-    background-color: #e1e4e8;
+    background-color: #ff7800;
+    box-shadow: 0 0 8px rgba(255, 120, 0, 0.5);
 }
 
 .current-date {
     margin-left: 15px;
     font-weight: bold;
     font-size: 1.1rem;
-    color: #4a6cf7;
+    color: #ff7800;
 }
 
 /* Tabs */
 .tabs {
     display: flex;
-    background-color: white;
-    border-bottom: 1px solid #e1e4e8;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #ff5500;
     overflow-x: auto;
 }
 
@@ -80,17 +83,17 @@ header {
     border: none;
     cursor: pointer;
     font-weight: 500;
-    color: #666;
+    color: #e0e0e0;
     position: relative;
     transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-    color: #4a6cf7;
+    color: #ff7800;
 }
 
 .tab-btn.active {
-    color: #4a6cf7;
+    color: #ff5500;
 }
 
 .tab-btn.active::after {
@@ -100,7 +103,7 @@ header {
     left: 0;
     width: 100%;
     height: 3px;
-    background-color: #4a6cf7;
+    background-color: #ff5500;
 }
 
 /* View Toggle */
@@ -111,8 +114,8 @@ header {
 }
 
 .view-toggle button {
-    background-color: #4a6cf7;
-    color: white;
+    background-color: #ff5500;
+    color: #000000;
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
@@ -122,17 +125,18 @@ header {
 }
 
 .view-toggle button:hover {
-    background-color: #3a5bd9;
+    background-color: #ff7800;
+    box-shadow: 0 0 8px rgba(255, 120, 0, 0.5);
 }
 
 /* Tab Content */
 .tab-content {
     display: none;
     padding: 20px;
-    background-color: white;
+    background-color: #2a2a2a;
     margin: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .tab-content.active {
@@ -142,7 +146,7 @@ header {
 /* Schedule Sections */
 .schedule-section {
     margin-bottom: 20px;
-    border: 1px solid #e1e4e8;
+    border: 1px solid #ff5500;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -152,17 +156,18 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: #3a3a3a;
     cursor: pointer;
 }
 
 .section-header h3 {
     font-size: 1.2rem;
-    color: #333;
+    color: #ff7800;
 }
 
 .toggle-btn {
     transition: transform 0.3s ease;
+    color: #ff5500;
 }
 
 .toggle-btn.collapsed {
@@ -179,9 +184,9 @@ header {
     align-items: center;
     padding: 12px 15px;
     margin-bottom: 10px;
-    background-color: white;
+    background-color: #3a3a3a;
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
@@ -189,18 +194,19 @@ header {
 
 .event-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(255, 85, 0, 0.2);
+    background-color: #444444;
 }
 
 .event-card.current {
-    background-color: #f0f7ff;
-    border: 1px solid #4a6cf7;
+    background-color: #4a3a30;
+    border: 1px solid #ff5500;
 }
 
 .event-time {
     min-width: 80px;
     font-weight: bold;
-    color: #555;
+    color: #ff7800;
 }
 
 .event-emoji {
@@ -211,44 +217,46 @@ header {
 .event-title {
     flex-grow: 1;
     font-weight: 500;
+    color: #e0e0e0;
 }
 
 /* Category Colors */
 .event-card.school {
-    border-left: 4px solid #4a6cf7;
+    border-left: 4px solid #ff5500;
 }
 
 .event-card.basketball {
-    border-left: 4px solid #ff9800;
+    border-left: 4px solid #ff7800;
 }
 
 .event-card.study {
-    border-left: 4px solid #4caf50;
+    border-left: 4px solid #ff9900;
 }
 
 .event-card.fun {
-    border-left: 4px solid #f44336;
+    border-left: 4px solid #ff3b00;
 }
 
 .event-card.reminder {
-    border-left: 4px solid #9c27b0;
+    border-left: 4px solid #ff6600;
 }
 
 .event-card.routine {
-    border-left: 4px solid #ffc107;
+    border-left: 4px solid #ff8800;
 }
 
 /* Custom Event Form */
 .custom-form {
-    background-color: #f8f9fa;
+    background-color: #3a3a3a;
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 20px;
+    border: 1px solid #ff5500;
 }
 
 .custom-form h3 {
     margin-bottom: 15px;
-    color: #333;
+    color: #ff7800;
 }
 
 .form-group {
@@ -259,7 +267,7 @@ header {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
-    color: #555;
+    color: #e0e0e0;
 }
 
 .form-group input,
@@ -267,9 +275,12 @@ header {
 .form-group textarea {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #ff5500;
     border-radius: 4px;
     font-size: 1rem;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    font-family: 'Times New Roman', Times, serif;
 }
 
 .form-group textarea {
@@ -285,11 +296,12 @@ header {
 .form-group.checkbox input {
     width: auto;
     margin-right: 10px;
+    accent-color: #ff5500;
 }
 
 .submit-btn {
-    background-color: #4a6cf7;
-    color: white;
+    background-color: #ff5500;
+    color: #000000;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -299,7 +311,7 @@ header {
 }
 
 .submit-btn:hover {
-    background-color: #3a5bd9;
+    background-color: #ff7800;
 }
 
 /* Templates Section */
@@ -312,15 +324,16 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 10px 15px;
-    background-color: #f0f2f5;
+    background-color: #3a3a3a;
     border-radius: 4px;
     margin-bottom: 10px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    border-left: 3px solid #ff7800;
 }
 
 .template-item:hover {
-    background-color: #e1e4e8;
+    background-color: #444444;
 }
 
 /* Custom Events */
@@ -340,7 +353,7 @@ header {
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: #f44336;
+    color: #ff3b00;
     cursor: pointer;
     font-size: 1.2rem;
 }
@@ -353,20 +366,27 @@ header {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     z-index: 1000;
     justify-content: center;
     align-items: center;
 }
 
 .popup-content {
-    background-color: white;
+    background-color: #2a2a2a;
     padding: 25px;
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(255, 85, 0, 0.3);
+    border: 1px solid #ff5500;
+    color: #e0e0e0;
+}
+
+.popup-content h3 {
+    color: #ff7800;
+    margin-bottom: 15px;
 }
 
 .close-popup {
@@ -375,18 +395,19 @@ header {
     right: 15px;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: #ff5500;
 }
 
 /* Calendar View */
 .calendar-view {
     display: none;
     padding: 20px;
-    background-color: white;
+    background-color: #2a2a2a;
     margin: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     overflow-x: auto;
+    border: 1px solid #ff5500;
 }
 
 .calendar-header {
@@ -394,8 +415,9 @@ header {
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
     font-weight: bold;
-    border-bottom: 1px solid #e1e4e8;
+    border-bottom: 1px solid #ff5500;
     padding-bottom: 10px;
+    color: #ff7800;
 }
 
 .day-header {
@@ -407,16 +429,16 @@ header {
     grid-template-columns: repeat(7, 1fr);
     grid-auto-rows: 60px;
     gap: 1px;
-    background-color: #e1e4e8;
+    background-color: #444444;
 }
 
 .hour-cell {
-    background-color: white;
+    background-color: #3a3a3a;
     padding: 5px;
     font-size: 0.8rem;
     overflow: hidden;
     position: relative;
-    border-bottom: 1px solid #f0f2f5;
+    border-bottom: 1px solid #444444;
 }
 
 .hour-label {
@@ -424,12 +446,12 @@ header {
     top: 2px;
     left: 2px;
     font-size: 0.7rem;
-    color: #999;
+    color: #ff7800;
 }
 
 .calendar-event {
-    background-color: #e3f2fd;
-    border-left: 3px solid #4a6cf7;
+    background-color: #4a3a30;
+    border-left: 3px solid #ff5500;
     padding: 2px 4px;
     margin-top: 15px;
     font-size: 0.75rem;
@@ -438,6 +460,7 @@ header {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #e0e0e0;
 }
 
 /* Responsive Design */
