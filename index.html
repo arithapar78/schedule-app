@@ -8,6 +8,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+    <!-- Schedule AI Button -->
+    <div class="ai-button" id="scheduleAiButton">
+        <i class="fas fa-robot"></i>
+        <span>Schedule AI</span>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <h3>Schedule AI</h3>
+            <span class="close-chat" id="closeChat">&times;</span>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message system-message">
+                <div class="message-content">
+                    Welcome to Schedule AI! Type your question about your schedule.
+                </div>
+            </div>
+            <!-- User messages will be added here dynamically -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message here...">
+            <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
     <header>
         <div class="header-content">
             <h1>My Interactive Schedule</h1>

@@ -37,6 +37,7 @@ let currentDate = new Date();
 let currentView = 'list'; // 'list' or 'calendar'
 let customEvents = [];
 let templates = [];
+let isChatOpen = false;
 
 // DOM Elements
 const currentDateElement = document.getElementById('currentDate');
@@ -46,6 +47,100 @@ const viewToggleButton = document.getElementById('viewToggle');
 const calendarView = document.getElementById('calendarView');
 const eventPopup = document.getElementById('eventPopup');
 const closePopup = document.querySelector('.close-popup');
+const scheduleAiButton = document.getElementById('scheduleAiButton');
+const chatContainer = document.getElementById('chatContainer');
+const closeChat = document.getElementById('closeChat');
+const userInput = document.getElementById('userInput');
+const sendMessage = document.getElementById('sendMessage');
+const chatMessages = document.getElementById('chatMessages');
+
+// AI Response System
+const aiResponses = {
+    // Greeting patterns
+    greetings: [
+        { patterns: ['hello', 'hi', 'hey', 'greetings', 'howdy'], responses: [
+            "Hello! How can I help with your schedule today?",
+            "Hi there! I'm your Schedule AI. What would you like to know about your day?",
+            "Hey! I'm here to help manage your schedule. What can I do for you?"
+        ]},
+        
+        // General schedule questions
+        { patterns: ['schedule', 'plan', 'agenda', 'today', 'what do i have'], responses: [
+            "I can help you check your schedule. Are you asking about today or another day?",
+            "Your schedule is my specialty! What day would you like to know about?",
+            "I'd be happy to tell you about your schedule. Which day are you interested in?"
+        ]},
+        
+        // Time-specific questions
+        { patterns: ['morning', 'afternoon', 'evening', 'tonight', 'tomorrow'], responses: [
+            "Let me check that time period for you. One moment...",
+            "I'll find what you have scheduled for that time.",
+            "Looking up your schedule for that time frame now."
+        ]},
+        
+        // Basketball related questions
+        { patterns: ['basketball', 'practice', 'game', 'training', 'bobby', 'rene'], responses: [
+            "Let me check your basketball schedule...",
+            "Looking up your basketball commitments now.",
+            "I'll find your next basketball activity."
+        ]},
+        
+        // School related questions
+        { patterns: ['school', 'class', 'homework', 'study', 'debate', 'aops'], responses: [
+            "Let me check your school schedule...",
+            "Looking up your academic commitments now.",
+            "I'll find information about your school activities."
+        ]},
+        
+        // Help or instructions
+        { patterns: ['help', 'how do you work', 'what can you do', 'instructions'], responses: [
+            "I can help you with your schedule! You can ask me things like 'What's on my schedule today?', 'When is my next basketball practice?', or 'Do I have any free time this weekend?'",
+            "I'm your Schedule AI assistant. Try asking me about your upcoming events, specific activities, or free time slots.",
+            "I'm here to help manage your schedule. Ask me about specific events, times, or days, and I'll provide the information you need."
+        ]},
+        
+        // Fallback responses
+        { patterns: ['fallback'], responses: [
+            "I'm not sure I understand. Could you ask about your schedule in a different way?",
+            "I'm still learning! Could you rephrase your question about your schedule?",
+            "I didn't quite catch that. Try asking about specific events or times in your schedule."
+        ]}
+    ],
+    
+    // Day-specific responses
+    daySpecific: {
+        0: "On Sunday, you have workout in the morning, possibly basketball games (check your custom events), and free time in the evening if there's no game.",
+        1: "On Monday, your schedule includes morning workout, school, Bobby Basketball Training from 4:20-7:00 PM, and free time in the evening.",
+        2: "On Tuesday, you have morning workout, school, homework/study time from 3:00-4:00 PM, and Basketball Practice from 6:55-8:15 PM.",
+        3: "On Wednesday, your schedule includes morning workout, school, homework/study time from 3:00-4:00 PM, and Personal Training with Rene from 7:00-8:00 PM.",
+        4: "On Thursday, you have morning workout, school, AoPS Class from 4:00-5:45 PM, a snack break, and then Debate from 6:00-8:00 PM.",
+        5: "On Friday, your schedule includes morning workout, school, and Rene Practice from 7:00-8:00 PM.",
+        6: "On Saturday, you have workout in the morning, possibly basketball games (check your custom events), and free time in the evening if there's no game."
+    },
+    
+    // Category-specific responses
+    categorySpecific: {
+        basketball: {
+            monday: "On Monday, you have Bobby Basketball Training from 4:20-7:00 PM.",
+            tuesday: "On Tuesday, you have Basketball Practice from 6:55-8:15 PM.",
+            wednesday: "On Wednesday, you have Personal Training with Rene from 7:00-8:00 PM.",
+            friday: "On Friday, you have Rene Practice from 7:00-8:00 PM.",
+            weekend: "On weekends, you may have basketball games. Check your custom events for specific game times."
+        },
+        school: {
+            weekday: "On weekdays, you have school from 7:30 AM to 2:56 PM.",
+            thursday: "On Thursday, you have AoPS Class from 4:00-5:45 PM and Debate from 6:00-8:00 PM."
+        },
+        study: {
+            tuesday: "On Tuesday, you have homework/study time (Math & Debate) from 3:00-4:00 PM.",
+            wednesday: "On Wednesday, you have homework/study time (Math & Debate) from 3:00-4:00 PM."
+        },
+        routine: {
+            morning: "Your morning routine includes waking up at 5:20 AM, workout from 6:00-7:00 AM, breakfast, and getting ready for school.",
+            evening: "Your evening routine includes winding down around 8:30-9:15 PM and going to sleep."
+        }
+    }
+};
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
@@ -73,6 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set interval to update current event highlight
     setInterval(highlightCurrentEvent, 60000); // Check every minute
+    
+    // Set up chat functionality
+    setupChatFunctionality();
 });
 
 // Load data from localStorage
@@ -93,6 +191,310 @@ function loadFromLocalStorage() {
 function saveToLocalStorage() {
     localStorage.setItem('customEvents', JSON.stringify(customEvents));
     localStorage.setItem('templates', JSON.stringify(templates));
+}
+
+// Set up chat functionality
+function setupChatFunctionality() {
+    // Toggle chat when AI button is clicked
+    scheduleAiButton.addEventListener('click', () => {
+        toggleChat();
+    });
+    
+    // Close chat when close button is clicked
+    closeChat.addEventListener('click', () => {
+        toggleChat(false);
+    });
+    
+    // Send message when send button is clicked
+    sendMessage.addEventListener('click', () => {
+        sendUserMessage();
+    });
+    
+    // Send message when Enter key is pressed in input field
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendUserMessage();
+        }
+    });
+}
+
+// Toggle chat visibility
+function toggleChat(open = !isChatOpen) {
+    isChatOpen = open;
+    
+    if (isChatOpen) {
+        chatContainer.style.display = 'flex';
+        scheduleAiButton.style.display = 'none';
+        userInput.focus();
+    } else {
+        chatContainer.style.display = 'none';
+        scheduleAiButton.style.display = 'flex';
+    }
+}
+
+// Send user message
+function sendUserMessage() {
+    const message = userInput.value.trim();
+    
+    if (message) {
+        // Create user message element
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message user-message';
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.textContent = message;
+        
+        messageElement.appendChild(messageContent);
+        chatMessages.appendChild(messageElement);
+        
+        // Clear input field
+        userInput.value = '';
+        
+        // Scroll to bottom of chat
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Focus input field
+        userInput.focus();
+        
+        // Generate AI response
+        setTimeout(() => {
+            generateAiResponse(message);
+        }, 500); // Small delay to make it feel more natural
+    }
+}
+
+// Generate AI response based on user message
+function generateAiResponse(userMessage) {
+    // Convert to lowercase for easier matching
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Check for specific day mentions
+    const dayMentions = {
+        'sunday': 0, 'sun': 0,
+        'monday': 1, 'mon': 1,
+        'tuesday': 2, 'tue': 2, 'tues': 2,
+        'wednesday': 3, 'wed': 3,
+        'thursday': 4, 'thu': 4, 'thurs': 4,
+        'friday': 5, 'fri': 5,
+        'saturday': 6, 'sat': 6,
+        'today': new Date().getDay(),
+        'tomorrow': (new Date().getDay() + 1) % 7,
+        'weekend': [0, 6],
+        'weekday': [1, 2, 3, 4, 5]
+    };
+    
+    // Check for category mentions
+    const categoryMentions = {
+        'basketball': ['basketball', 'practice', 'game', 'training', 'bobby', 'rene'],
+        'school': ['school', 'class', 'aops'],
+        'study': ['homework', 'study', 'debate'],
+        'routine': ['routine', 'wake up', 'sleep', 'morning routine', 'evening routine']
+    };
+    
+    // Check for time period mentions
+    const timePeriodMentions = {
+        'morning': ['morning', 'am', 'before noon', 'breakfast'],
+        'afternoon': ['afternoon', 'pm', 'after noon', 'lunch'],
+        'evening': ['evening', 'night', 'dinner', 'tonight']
+    };
+    
+    // Check for next event mentions
+    const nextMentions = ['next', 'upcoming', 'following', 'future'];
+    
+    // Check for free time mentions
+    const freeTimeMentions = ['free time', 'free', 'available', 'open', 'nothing scheduled'];
+    
+    // Variables to track what was mentioned
+    let mentionedDay = null;
+    let mentionedCategory = null;
+    let mentionedTimePeriod = null;
+    let mentionedNext = false;
+    let mentionedFreeTime = false;
+    
+    // Check for day mentions
+    for (const [day, value] of Object.entries(dayMentions)) {
+        if (lowerMessage.includes(day)) {
+            mentionedDay = value;
+            break;
+        }
+    }
+    
+    // Check for category mentions
+    for (const [category, keywords] of Object.entries(categoryMentions)) {
+        if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+            mentionedCategory = category;
+            break;
+        }
+    }
+    
+    // Check for time period mentions
+    for (const [period, keywords] of Object.entries(timePeriodMentions)) {
+        if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+            mentionedTimePeriod = period;
+            break;
+        }
+    }
+    
+    // Check for next mentions
+    mentionedNext = nextMentions.some(keyword => lowerMessage.includes(keyword));
+    
+    // Check for free time mentions
+    mentionedFreeTime = freeTimeMentions.some(keyword => lowerMessage.includes(keyword));
+    
+    // Generate response based on what was mentioned
+    let response = "";
+    
+    // Handle basketball-specific questions
+    if (mentionedCategory === 'basketball') {
+        if (mentionedNext) {
+            const today = new Date().getDay();
+            let nextBasketballDay = null;
+            
+            // Find the next basketball day
+            if (today === 0) nextBasketballDay = 1; // Sunday -> Monday
+            else if (today === 1) nextBasketballDay = 2; // Monday -> Tuesday
+            else if (today === 2) nextBasketballDay = 3; // Tuesday -> Wednesday
+            else if (today === 3) nextBasketballDay = 5; // Wednesday -> Friday
+            else if (today === 4) nextBasketballDay = 5; // Thursday -> Friday
+            else if (today === 5) nextBasketballDay = 0; // Friday -> Weekend games
+            else if (today === 6) nextBasketballDay = 1; // Saturday -> Monday
+            
+            if (nextBasketballDay === 0 || nextBasketballDay === 6) {
+                response = "Your next basketball activity would be weekend games. Check your custom events for specific game times.";
+            } else if (nextBasketballDay === 1) {
+                response = "Your next basketball activity is Bobby Basketball Training on Monday from 4:20-7:00 PM.";
+            } else if (nextBasketballDay === 2) {
+                response = "Your next basketball activity is Basketball Practice on Tuesday from 6:55-8:15 PM.";
+            } else if (nextBasketballDay === 3) {
+                response = "Your next basketball activity is Personal Training with Rene on Wednesday from 7:00-8:00 PM.";
+            } else if (nextBasketballDay === 5) {
+                response = "Your next basketball activity is Rene Practice on Friday from 7:00-8:00 PM.";
+            }
+        } else if (mentionedDay !== null) {
+            // Day-specific basketball response
+            if (mentionedDay === 1) {
+                response = aiResponses.categorySpecific.basketball.monday;
+            } else if (mentionedDay === 2) {
+                response = aiResponses.categorySpecific.basketball.tuesday;
+            } else if (mentionedDay === 3) {
+                response = aiResponses.categorySpecific.basketball.wednesday;
+            } else if (mentionedDay === 5) {
+                response = aiResponses.categorySpecific.basketball.friday;
+            } else if (mentionedDay === 0 || mentionedDay === 6 || (Array.isArray(mentionedDay) && mentionedDay.includes(0) && mentionedDay.includes(6))) {
+                response = aiResponses.categorySpecific.basketball.weekend;
+            } else {
+                response = "You don't have any basketball activities scheduled for that day.";
+            }
+        } else {
+            // General basketball schedule
+            response = "Your basketball schedule includes: Bobby Basketball Training on Monday (4:20-7:00 PM), Basketball Practice on Tuesday (6:55-8:15 PM), Personal Training with Rene on Wednesday (7:00-8:00 PM), and Rene Practice on Friday (7:00-8:00 PM). Weekend games vary, so check your custom events for specific times.";
+        }
+    }
+    // Handle school-specific questions
+    else if (mentionedCategory === 'school') {
+        if (mentionedDay !== null) {
+            if (Array.isArray(mentionedDay) && mentionedDay.includes(1) && mentionedDay.includes(5)) {
+                response = aiResponses.categorySpecific.school.weekday;
+            } else if (mentionedDay === 4) {
+                response = aiResponses.categorySpecific.school.weekday + " " + aiResponses.categorySpecific.school.thursday;
+            } else if (mentionedDay === 0 || mentionedDay === 6 || (Array.isArray(mentionedDay) && mentionedDay.includes(0) && mentionedDay.includes(6))) {
+                response = "You don't have school on weekends.";
+            } else {
+                response = aiResponses.categorySpecific.school.weekday;
+            }
+        } else {
+            response = "Your school schedule is Monday to Friday from 7:30 AM to 2:56 PM. You also have AoPS Class on Thursday from 4:00-5:45 PM and Debate from 6:00-8:00 PM.";
+        }
+    }
+    // Handle study-specific questions
+    else if (mentionedCategory === 'study') {
+        if (mentionedDay !== null) {
+            if (mentionedDay === 2) {
+                response = aiResponses.categorySpecific.study.tuesday;
+            } else if (mentionedDay === 3) {
+                response = aiResponses.categorySpecific.study.wednesday;
+            } else {
+                response = "You don't have dedicated study time scheduled for that day, but you can use your evening free blocks for extra study if needed.";
+            }
+        } else {
+            response = "Your dedicated study times are Tuesday and Wednesday from 3:00-4:00 PM for Math & Debate homework. You can also use your evening free blocks for extra study if needed.";
+        }
+    }
+    // Handle routine-specific questions
+    else if (mentionedCategory === 'routine') {
+        if (mentionedTimePeriod === 'morning') {
+            response = aiResponses.categorySpecific.routine.morning;
+        } else if (mentionedTimePeriod === 'evening') {
+            response = aiResponses.categorySpecific.routine.evening;
+        } else {
+            response = aiResponses.categorySpecific.routine.morning + " " + aiResponses.categorySpecific.routine.evening;
+        }
+    }
+    // Handle day-specific questions without category
+    else if (mentionedDay !== null && !mentionedCategory) {
+        if (Array.isArray(mentionedDay)) {
+            if (mentionedDay.includes(0) && mentionedDay.includes(6)) {
+                response = "On weekends, you have workout in the morning, possibly basketball games (check your custom events), and free time in the evening if there's no game.";
+            } else {
+                response = "On weekdays, you have morning workout, school from 7:30 AM to 2:56 PM, and various afternoon activities depending on the day. Would you like details for a specific day?";
+            }
+        } else {
+            response = aiResponses.daySpecific[mentionedDay];
+        }
+    }
+    // Handle free time questions
+    else if (mentionedFreeTime) {
+        if (mentionedDay !== null) {
+            if (Array.isArray(mentionedDay)) {
+                if (mentionedDay.includes(0) && mentionedDay.includes(6)) {
+                    response = "On weekends, your free time is typically in the evening if you don't have basketball games.";
+                } else {
+                    response = "On weekdays, you typically have free blocks in the evening for gaming, extra study, or personal time.";
+                }
+            } else if (mentionedDay === 0 || mentionedDay === 6) {
+                response = "On this day, your free time is typically in the evening if you don't have basketball games.";
+            } else {
+                response = "On this day, you typically have free blocks in the evening for gaming, extra study, or personal time.";
+            }
+        } else {
+            response = "Your free time is typically in the evenings on weekdays for gaming, extra study, or personal time. On weekends, you have free time in the evenings if you don't have basketball games.";
+        }
+    }
+    // Handle general questions or greetings
+    else {
+        // Check for greeting patterns
+        let matchedGreeting = false;
+        for (const greeting of aiResponses.greetings) {
+            if (greeting.patterns.some(pattern => lowerMessage.includes(pattern))) {
+                const randomIndex = Math.floor(Math.random() * greeting.responses.length);
+                response = greeting.responses[randomIndex];
+                matchedGreeting = true;
+                break;
+            }
+        }
+        
+        // If no greeting matched, use fallback
+        if (!matchedGreeting) {
+            const fallbackResponses = aiResponses.greetings.find(g => g.patterns.includes('fallback')).responses;
+            const randomIndex = Math.floor(Math.random() * fallbackResponses.length);
+            response = fallbackResponses[randomIndex];
+        }
+    }
+    
+    // Create AI response element
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message system-message';
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.textContent = response;
+    
+    messageElement.appendChild(messageContent);
+    chatMessages.appendChild(messageElement);
+    
+    // Scroll to bottom of chat
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Set up event listeners
